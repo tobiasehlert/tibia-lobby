@@ -49,7 +49,7 @@ export class SeederService implements OnApplicationBootstrap {
         let list: string[] = [];
         try {
             this.logger.log('Buscando mundos globais (TibiaData)...');
-            const res = await axios.get('https://api.tibiadata.com/v4/worlds', { timeout: 10000 });
+            const res = await axios.get('https://api.tibiadata.com/v5/worlds', { timeout: 10000 });
             list = res?.data?.worlds?.regular_worlds?.map((w: any) => w?.name)?.filter(Boolean) ?? [];
         } catch (e) {
             this.logger.warn(`Falha ao chamar TibiaData, usando fallback local. Motivo: ${(e as any)?.message ?? e}`);

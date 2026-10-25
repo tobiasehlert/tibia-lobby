@@ -1,4 +1,4 @@
-import { Injectable, NotFoundException, BadRequestException } from "@nestjs/common";
+import { Injectable, NotFoundException, BadRequestException, BadGatewayException } from "@nestjs/common";
 import axios from "axios";
 import { InjectRepository } from "@nestjs/typeorm";
 import { Repository } from "typeorm";
@@ -106,32 +106,42 @@ export class CharacterService {
     }
     
     async fetchTibiaCharacterData(name: string) {
-        try {
-            const trimmed = name?.trim();
-            if (!trimmed) return null;
+        const trimmed = name?.trim();
+        if (!trimmed) return null;
 
+        let tibiaCharacter: {
+            name: string;
+            world: string;
+            vocation: string;
+            level: number;
+        } | undefined;
+
+        try {
             const response = await axios.get(
-                `https://api.tibiadata.com/v4/character/${encodeURIComponent(trimmed)}`,
+                `https://api.tibiadata.com/v5/character/${encodeURIComponent(trimmed)}`,
                 { timeout: 10000 }
             );
-
-            const data = response.data;
-            if (!data || !data.character || !data.character.character) {
-                console.error("Estrutura inesperada da TibiaData ou personagem inexistente.", data);
-                return null;
+            tibiaCharacter = response.data?.character?.character;
+        } catch (error: unknown) {
+            if (axios.isAxiosError(error)) {
+                if (error.response?.status === 404) return null;
+                if (error.response?.status === 400) {
+                    throw new BadRequestException("Nome de personagem inválido para a API TibiaData.");
+                }
             }
-
-            const tibiaCharacter = data.character.character;
-            return {
-                name: tibiaCharacter.name,
-                world: tibiaCharacter.world,
-                vocation: tibiaCharacter.vocation,
-                level: tibiaCharacter.level,
-            };
-        } catch (error: any) {
-            console.error("Erro ao buscar personagem na API TibiaData:", error?.message || error);
-            return null;
+            throw new BadGatewayException("Falha ao consultar a API TibiaData.");
         }
+
+        if (!tibiaCharacter) {
+            throw new BadGatewayException("Resposta inválida da API TibiaData.");
+        }
+
+        return {
+            name: tibiaCharacter.name,
+            world: tibiaCharacter.world,
+            vocation: tibiaCharacter.vocation,
+            level: tibiaCharacter.level,
+        };
     }
     
     

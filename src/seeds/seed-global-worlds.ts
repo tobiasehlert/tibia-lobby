@@ -12,13 +12,13 @@ async function main() {
     const worldRepo = app.get<typeof World>(getRepositoryToken(World)) as any;
 
     console.log('> Buscando mundos do Tibia Global na TibiaData API...');
-    const res = await fetch('https://api.tibiadata.com/v4/worlds');
+    const res = await fetch('https://api.tibiadata.com/v5/worlds');
     if (!res.ok) {
       throw new Error(`Falha ao consultar TibiaData: ${res.status} ${res.statusText}`);
     }
     const data = await res.json();
 
-    // Estrutura esperada em v4: { worlds: { regular_worlds: [{ name: string, ... }] } }
+    // Estrutura esperada: { worlds: { regular_worlds: [{ name: string, ... }] } }
     const list: string[] =
       data?.worlds?.regular_worlds?.map((w: any) => w?.name)?.filter(Boolean) ?? [];
 
